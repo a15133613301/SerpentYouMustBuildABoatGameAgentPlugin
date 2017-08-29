@@ -226,7 +226,7 @@ def display_game_board(game_board):
         print("")
 
 
-def predict_game_move(self, model, boolean_game_board_deltas, distribution=None):
+def predict_game_move(model, boolean_game_board_deltas, distribution=None):
     game_move_scores = dict()
 
     for game_move, boolean_game_boards in boolean_game_board_deltas.items():

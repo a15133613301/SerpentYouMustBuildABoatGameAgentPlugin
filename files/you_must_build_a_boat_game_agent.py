@@ -52,16 +52,16 @@ class YouMustBuildABoatGameAgent(GameAgent):
     @property
     def match_milestone_sfx_mapping(self):
         return {
-            10: f"{config.get('sfx_path')}/first_blood.wav",
-            20: f"{config.get('sfx_path')}/Double_Kill.wav",
-            30: f"{config.get('sfx_path')}/Killing_Spree.wav",
-            40: f"{config.get('sfx_path')}/Dominating.wav",
-            50: f"{config.get('sfx_path')}/MegaKill.wav",
-            60: f"{config.get('sfx_path')}/Unstoppable.wav",
-            70: f"{config.get('sfx_path')}/WhickedSick.wav",
-            80: f"{config.get('sfx_path')}/MonsterKill.wav",
-            90: f"{config.get('sfx_path')}/GodLike.wav",
-            100: f"{config.get('sfx_path')}/Combowhore.wav"
+            10: f"{self.config.get('sfx_path')}/first_blood.wav",
+            20: f"{self.config.get('sfx_path')}/Double_Kill.wav",
+            30: f"{self.config.get('sfx_path')}/Killing_Spree.wav",
+            40: f"{self.config.get('sfx_path')}/Dominating.wav",
+            50: f"{self.config.get('sfx_path')}/MegaKill.wav",
+            60: f"{self.config.get('sfx_path')}/Unstoppable.wav",
+            70: f"{self.config.get('sfx_path')}/WhickedSick.wav",
+            80: f"{self.config.get('sfx_path')}/MonsterKill.wav",
+            90: f"{self.config.get('sfx_path')}/GodLike.wav",
+            100: f"{self.config.get('sfx_path')}/Combowhore.wav"
         }
 
     def setup_play(self):
