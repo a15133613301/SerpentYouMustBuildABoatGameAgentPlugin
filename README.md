@@ -7,3 +7,7 @@
 * **PLAY**: Learning Agent (SGD Regression)
 * **PLAY_BOT**: "Perfect Play" Solver Bot
 * **PLAY_RANDOM**: Random Move Bot
+
+### Dependencies
+
+Relies on latest [SerpentYouMustBuildABoatGamePlugin](https://github.com/SerpentAI/SerpentYouMustBuildABoatGamePlugin) being present.

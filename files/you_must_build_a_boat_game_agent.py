@@ -2,7 +2,7 @@ from lib.game_agent import GameAgent
 
 from lib.machine_learning.context_classification.context_classifiers import CNNInceptionV3ContextClassifier
 
-from .helpers.game import *
+from .helpers.ml import *
 
 import offshoot
 
@@ -152,22 +152,22 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
         if context.startswith("level_"):
             self.previous_game_board = self.game_board
-            self.game_board = parse_game_board(game_frame.frame, self.game, self.sprite_identifier)
+            self.game_board = self.game.api.parse_game_board(game_frame.frame, self.game, self.sprite_identifier)
 
             print("\033c")
             print("BOARD STATE:\n")
 
-            display_game_board(self.game_board)
+            self.game.api.display_game_board(self.game_board)
 
             self.click_unknown_tile()
 
-            game_board_deltas = generate_game_board_deltas(self.game_board)
+            game_board_deltas = self.game.api.generate_game_board_deltas(self.game_board)
 
             best_game_move_score = 0
             best_game_move = None
 
             for game_board_delta in game_board_deltas:
-                score = score_game_board(game_board_delta[1])
+                score = self.game.api.score_game_board(game_board_delta[1])
 
                 if score > best_game_move_score:
                     best_game_move_score = score
@@ -181,7 +181,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
             start_screen_region = f"GAME_BOARD_{game_move_start_cell}"
             end_screen_region = f"GAME_BOARD_{game_move_end_cell}"
 
-            game_move_distance = calculate_game_move_distance(game_move_start_cell, game_move_end_cell)
+            game_move_distance = self.game.api.calculate_game_move_distance(game_move_start_cell, game_move_end_cell)
 
             print(xtermcolor.colorize(f" Moving {best_game_move}... ", ansi=0, ansi_bg=39))
 
@@ -215,7 +215,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
             print(f"\nMoving {game_board_key}...")
 
-            game_move_distance = calculate_game_move_distance(start_coordinate, end_coordinate)
+            game_move_distance = self.game.api.calculate_game_move_distance(start_coordinate, end_coordinate)
 
             self.input_controller.drag_screen_region_to_screen_region(
                 start_screen_region=start_screen_region,
@@ -227,7 +227,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
     def handle_play_context_level(self, game_frame):
         # Update the Game Agent State
         self.previous_game_board = self.game_board
-        self.game_board = parse_game_board(game_frame.frame, self.game, self.sprite_identifier)
+        self.game_board = self.game.api.parse_game_board(game_frame.frame, self.game, self.sprite_identifier)
 
         # Click an unknown game board tile. Power-ups are not parsed and need
         # to eventually be cleared out / activated.
@@ -237,7 +237,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
         self.current_attempts += 1
 
         # Generate the game boards resulting from the 82 possible unique moves
-        game_board_deltas = generate_game_board_deltas(self.game_board)
+        game_board_deltas = self.game.api.generate_game_board_deltas(self.game_board)
 
         # Collect the game board for dataset generation
         if self.game_board[self.game_board == 0].size < 3:
@@ -264,7 +264,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
                 break
 
         # Handle game board match
-        if score_game_board(game_board_delta) > 0:
+        if self.game.api.score_game_board(game_board_delta) > 0:
             self.current_matches += 1
 
             if self.current_matches in self.match_milestone_sfx_mapping:
@@ -274,7 +274,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
         self.display_game_agent_state(game_board_key)
 
         # Calculate the game move distance
-        game_move_distance = calculate_game_move_distance(start_coordinate, end_coordinate)
+        game_move_distance = self.game.api.calculate_game_move_distance(start_coordinate, end_coordinate)
 
         # Send the input to perform the game move
         self.input_controller.drag_screen_region_to_screen_region(
@@ -285,12 +285,12 @@ class YouMustBuildABoatGameAgent(GameAgent):
         )
 
     def handle_play_predict_mode(self, game_board_deltas):
-        boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas)
+        boolean_game_board_deltas = self.game.api.generate_boolean_game_board_deltas(game_board_deltas)
 
         start_coordinate, end_coordinate = predict_game_move(
             self.model,
             boolean_game_board_deltas,
-            distribution=[0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 4]
+            distribution=[0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7]
         )
 
         start_screen_region = f"GAME_BOARD_{start_coordinate}"
@@ -365,9 +365,9 @@ class YouMustBuildABoatGameAgent(GameAgent):
         model_score = 0
 
         for game_board in self.validation_game_boards:
-            game_board_deltas = generate_game_board_deltas(game_board)
+            game_board_deltas = self.game.api.generate_game_board_deltas(game_board)
 
-            boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas)
+            boolean_game_board_deltas = self.game.api.generate_boolean_game_board_deltas(game_board_deltas)
 
             start_coordinate, end_coordinate = predict_game_move(self.model, boolean_game_board_deltas, distribution=[0])
 
@@ -378,7 +378,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
                     game_move_game_board_delta = game_board_delta[1]
                     break
 
-            model_score += score_game_board(game_move_game_board_delta)
+            model_score += self.game.api.score_game_board(game_move_game_board_delta)
 
         return model_score
 
@@ -475,7 +475,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
         print(f"CURRENT MODEL VALIDATION SCORE: {self.model_validation_score}\n")
 
         print("BOARD STATE:\n")
-        display_game_board(self.game_board)
+        self.game.api.display_game_board(self.game_board)
 
         print("")
 
@@ -538,5 +538,5 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
                 frame = skimage.io.imread(f"datasets/ymbab-validation/{file}")
 
-                game_board = parse_game_board(frame, self.game, self.sprite_identifier)
+                game_board = self.game.api.parse_game_board(frame, self.game, self.sprite_identifier)
                 self.validation_game_boards.append(game_board)
