@@ -16,9 +16,6 @@ import numpy as np
 import lib.cv
 
 from lib.sprite import Sprite
-from lib.sprite_identifier import SpriteIdentifier
-
-from lib.games import YouMustBuildABoatGame
 
 import xtermcolor
 import random
@@ -28,12 +25,7 @@ import skimage.filters
 import skimage.morphology
 import skimage.measure
 
-
-game = YouMustBuildABoatGame()
-sprite_identifier = SpriteIdentifier(pixel_quantity=10, iterations=3)
-
-for sprite_name, sprite in game.sprites.items():
-    sprite_identifier.register(sprite)
+from lib.config import config
 
 
 rows = ["A", "B", "C", "D", "E", "F"]
@@ -79,7 +71,7 @@ display_mapping = {
 }
 
 
-def parse_game_board(frame):
+def parse_game_board(frame, game, sprite_identifier):
     parsed_rows = list()
 
     for row in rows:
@@ -89,9 +81,9 @@ def parse_game_board(frame):
             screen_region = f"GAME_BOARD_{row}{column}"
 
             cell = lib.cv.extract_region_from_image(frame, game.screen_regions.get(screen_region))
-            cell_sprite = Sprite(screen_region, image_data=cell[:, :, :, np.newaxis])
+            cell_sprite = Sprite(screen_region, image_data=cell[:, :, :, np.newaxis], seed=config["sprites"].get("seed"))
 
-            cell_label = sprite_identifier.identify(cell_sprite)
+            cell_label = sprite_identifier.identify(cell_sprite, mode="SIGNATURE_COLORS", score_threshold=75)
             row_cells.append(cell_sprite_mapping.get(cell_label.split("_")[-1], 0))
 
         parsed_rows.append(row_cells)

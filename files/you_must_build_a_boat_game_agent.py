@@ -152,7 +152,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
         if context.startswith("level_"):
             self.previous_game_board = self.game_board
-            self.game_board = parse_game_board(game_frame.frame)
+            self.game_board = parse_game_board(game_frame.frame, self.game, self.sprite_identifier)
 
             print("\033c")
             print("BOARD STATE:\n")
@@ -191,6 +191,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
                 duration=(0.1 + (game_move_distance * 0.05)),
                 game=self.game
             )
+
         elif context == "game_over":
             self.input_controller.click_screen_region(screen_region="GAME_OVER_RUN_AGAIN", game=self.game)
             time.sleep(2)
@@ -226,7 +227,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
     def handle_play_context_level(self, game_frame):
         # Update the Game Agent State
         self.previous_game_board = self.game_board
-        self.game_board = parse_game_board(game_frame.frame)
+        self.game_board = parse_game_board(game_frame.frame, self.game, self.sprite_identifier)
 
         # Click an unknown game board tile. Power-ups are not parsed and need
         # to eventually be cleared out / activated.
@@ -537,5 +538,5 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
                 frame = skimage.io.imread(f"datasets/ymbab-validation/{file}")
 
-                game_board = parse_game_board(frame)
+                game_board = parse_game_board(frame, self.game, self.sprite_identifier)
                 self.validation_game_boards.append(game_board)
