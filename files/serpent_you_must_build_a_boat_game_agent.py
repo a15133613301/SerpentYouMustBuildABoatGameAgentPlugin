@@ -26,7 +26,7 @@ import shlex
 from datetime import datetime
 
 
-class YouMustBuildABoatGameAgent(GameAgent):
+class SerpentYouMustBuildABoatGameAgent(GameAgent):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -64,10 +64,10 @@ class YouMustBuildABoatGameAgent(GameAgent):
             100: f"{self.config.get('sfx_path')}/Combowhore.wav"
         }
 
-    def setup_play(self):
+    def setup_play(self, **kwargs):
         plugin_path = offshoot.config["file_paths"]["plugins"]
 
-        context_classifier_path = f"{plugin_path}/YouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_context.model"
+        context_classifier_path = f"{plugin_path}/SerpentYouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_context.model"
 
         context_classifier = CNNInceptionV3ContextClassifier(input_shape=(384, 512, 3))
         context_classifier.prepare_generators()
@@ -75,13 +75,16 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
         self.machine_learning_models["context_classifier"] = context_classifier
 
+        self.model = None
+        self.model_empty = False
+
         self._load_model(plugin_path)
 
         # Game Agent State
         self.game_board = np.zeros((6, 8))
         self.previous_game_board = np.zeros((6, 8))
 
-        self.mode = "PREDICT"  # "RANDOM"
+        self.mode = "PREDICT" if not self.model_empty else "RANDOM"
 
         self.current_run = 0
         self.current_run_started_at = None
@@ -119,10 +122,10 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
         self._load_validation_game_boards()
 
-    def setup_play_bot(self):
+    def setup_play_bot(self, **kwargs):
         plugin_path = offshoot.config["file_paths"]["plugins"]
 
-        context_classifier_path = f"{plugin_path}/YouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_context.model"
+        context_classifier_path = f"{plugin_path}/SerpentYouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_context.model"
 
         context_classifier = CNNInceptionV3ContextClassifier(input_shape=(384, 512, 3))
         context_classifier.prepare_generators()
@@ -133,7 +136,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
         self.game_board = np.zeros((6, 8))
         self.previous_game_board = np.zeros((6, 8))
 
-    def handle_play(self, game_frame):
+    def handle_play(self, game_frame, **kwargs):
         context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
 
         if context is None:
@@ -144,7 +147,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
         elif context == "game_over":
             self.handle_play_context_game_over(game_frame)
 
-    def handle_play_bot(self, game_frame):
+    def handle_play_bot(self, game_frame, **kwargs):
         context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
 
         if context is None:
@@ -196,7 +199,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
             self.input_controller.click_screen_region(screen_region="GAME_OVER_RUN_AGAIN", game=self.game)
             time.sleep(2)
 
-    def handle_play_random(self, game_frame):
+    def handle_play_random(self, game_frame, **kwargs):
         context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
 
         if context is None:
@@ -405,10 +408,14 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
         serialized_model = pickle.dumps(self.model)
 
-        matching_model_path = f"{offshoot.config['file_paths']['plugins']}/YouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_matching.model"
+        matching_model_path = f"{offshoot.config['file_paths']['plugins']}/SerpentYouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_matching.model"
 
         with open(matching_model_path, "wb") as f:
             f.write(serialized_model)
+
+        if self.model_empty:
+            self.model_empty = False
+            self.mode = "PREDICT"
 
     def generate_game_board_dataset(self):
         print("\033c")
@@ -420,7 +427,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
             print(f"GENERATING TRAINING DATASETS: 0 / 1")
             print(f"NEXT RUN: {self.current_run + 1}")
 
-            game_board_vector_data, scores = generate_game_board_vector_data(self.game_boards[-1])
+            game_board_vector_data, scores = generate_game_board_vector_data(self.game_boards[-1], self.game)
 
             print("\033c")
             print(f"GENERATING TRAINING DATASETS: 1 / 1")
@@ -515,12 +522,13 @@ class YouMustBuildABoatGameAgent(GameAgent):
             self.input_controller.click_screen_region(screen_region=tile_screen_region, game=self.game)
 
     def _load_model(self, plugin_path):
-        matching_model_path = f"{plugin_path}/YouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_matching.model"
+        matching_model_path = f"{plugin_path}/SerpentYouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_matching.model"
 
         if os.path.isfile(matching_model_path):
             with open(matching_model_path, "rb") as f:
                 self.model = pickle.loads(f.read())
         else:
+            self.model_empty = True
             self.model = sklearn.linear_model.SGDRegressor(
                 loss="squared_loss",
                 penalty="elasticnet",

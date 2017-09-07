@@ -14,6 +14,8 @@ columns = [1, 2, 3, 4, 5, 6, 7, 8]
 
 def generate_game_board_vector_data(game_board, game):
     game_board_vector_data = list()
+    seen_vector_data = set()
+
     scores = list()
 
     game_board_deltas = game.api.generate_game_board_deltas(game_board)
@@ -24,15 +26,21 @@ def generate_game_board_vector_data(game_board, game):
             for i in range(6):
                 row = boolean_game_board[i, :]
 
-                game_board_vector_data.append(row)
-                scores.append(game.api.score_game_board_vector(row))
+                if tuple(row) not in seen_vector_data:
+                    game_board_vector_data.append(row)
+                    seen_vector_data.add(tuple(row))
+
+                    scores.append(game.api.score_game_board_vector(row))
 
             for i in range(8):
                 column = boolean_game_board[:, i]
                 column = np.append(column, [False, False])
 
-                game_board_vector_data.append(column)
-                scores.append(game.api.score_game_board_vector(column))
+                if tuple(column) not in seen_vector_data:
+                    game_board_vector_data.append(column)
+                    seen_vector_data.add(tuple(column))
+
+                    scores.append(game.api.score_game_board_vector(column))
 
     return game_board_vector_data, scores
 
